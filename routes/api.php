@@ -18,6 +18,9 @@ use App\Http\Controllers\Api\StateController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CompareController;
+use App\Http\Controllers\Api\FeatureController;
+use App\Http\Controllers\Api\SubscriptionController;
+use App\Http\Controllers\Api\SubscriptionPlanController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -50,13 +53,14 @@ Route::prefix('v1')->group(function () {
     Route::get('property-statuses', [PropertyStatusController::class, 'index']);
     Route::get('amenities', [AmenityController::class, 'index']);
     Route::get('agents', [UserController::class, 'agents']);
+    Route::get('features', [FeatureController::class, 'index']);
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
         // User routes
         Route::apiResource('users', UserController::class);
         Route::get('users/{user}/properties', [UserController::class, 'properties']);
-        Route::get('users/{user}/favorites', [UserController::class, 'favorites']);
+        Route::get('users/{user}/favorites', [UserController::class, 'userFavorites']);
 
         // Agency routes
         Route::apiResource('agencies', AgencyController::class);
@@ -64,7 +68,7 @@ Route::prefix('v1')->group(function () {
 
         // Property management routes
         Route::post('properties', [PropertyController::class, 'store']);
-        Route::put('properties/{property}', [PropertyController::class, 'update']);
+        Route::post('properties/{property}', [PropertyController::class, 'update']);
         Route::delete('properties/{property}', [PropertyController::class, 'destroy']);
 
         // Property interactions
@@ -80,10 +84,15 @@ Route::prefix('v1')->group(function () {
 
         // Property floor plans
         Route::apiResource('properties.floor-plans', PropertyFloorPlanController::class);
+        Route::post('properties/{property}/floor-plans/{floor_plan}', [PropertyFloorPlanController::class, 'store']);
+
 
         // Reviews
         Route::apiResource('properties.reviews', ReviewController::class);
-        Route::patch('properties/{property}/reviews/{review}/status', [ReviewController::class, 'updateStatus']);
+        Route::patch(
+            'properties/{property}/reviews/{review}/status',
+            [ReviewController::class, 'updateStatus']
+        );
 
         // Property inquiries
         Route::apiResource('properties.inquiries', PropertyInquiryController::class);
@@ -94,11 +103,22 @@ Route::prefix('v1')->group(function () {
 
         // Schedules
         Route::apiResource('properties.schedules', ScheduleController::class);
-        Route::patch('properties/{property}/schedules/{schedule}/status', [ScheduleController::class, 'updateStatus']);
+        Route::patch(
+            'properties/{property}/schedules/{schedule}/status',
+            [ScheduleController::class, 'updateStatus']
+        );
+
+        // Subscription routes
+        Route::get('subscription-plans', [SubscriptionPlanController::class, 'index']);
+        Route::get('my/subscriptions', [SubscriptionController::class, 'index']);
+        Route::post('subscriptions', [SubscriptionController::class, 'store']);
+        Route::get('subscriptions/{subscription}', [SubscriptionController::class, 'show']);
+        Route::post('subscriptions/{subscription}/cancel', [SubscriptionController::class, 'cancel']);
 
         // Admin only routes
         Route::middleware('can:admin')->group(function () {
-            Route::apiResource('property-types', PropertyTypeController::class)->except(['index']);
+            Route::apiResource('property-types', PropertyTypeController::class)
+                ->except(['index']);
             Route::apiResource('property-statuses', PropertyStatusController::class)
                 ->except(['index']);
             Route::apiResource('amenities', AmenityController::class)->except(['index']);
@@ -108,6 +128,15 @@ Route::prefix('v1')->group(function () {
             Route::get('contacts/{contact}', [ContactController::class, 'show']);
             Route::patch('contacts/{contact}/status', [ContactController::class, 'updateStatus']);
             Route::delete('contacts/{contact}', [ContactController::class, 'destroy']);
+
+            // Admin subscription plan management
+            Route::prefix('subscription-plans')->group(function () {
+                Route::get('/', [SubscriptionPlanController::class, 'index']);
+                Route::post('/', [SubscriptionPlanController::class, 'store']);
+                Route::get('/{subscriptionPlan}', [SubscriptionPlanController::class, 'show']);
+                Route::put('/{subscriptionPlan}', [SubscriptionPlanController::class, 'update']);
+                Route::delete('/{subscriptionPlan}', [SubscriptionPlanController::class, 'destroy']);
+            });
         });
 
         // Categories
@@ -123,6 +152,22 @@ Route::prefix('v1')->group(function () {
 
         // Contacts
         Route::apiResource('contacts', ContactController::class);
+
+        // Features
+        Route::apiResource('features', FeatureController::class);
+
+        // User favorites
+        Route::get('my/favorites', [UserController::class, 'myFavorites']);
+        Route::post('my/favorites/{property}', [UserController::class, 'addFavorite']);
+        Route::delete('my/favorites/{property}', [UserController::class, 'removeFavorite']);
+
+        // User compares
+        Route::get('my/compares', [UserController::class, 'myCompares']);
+        Route::post('my/compares/{property}', [UserController::class, 'addCompare']);
+        Route::delete('my/compares/{property}', [UserController::class, 'removeCompare']);
+
+        // Compare routes
+        Route::get('my/compared-properties', [UserController::class, 'getComparedProperties']);
     });
     require __DIR__ . '/auth.php';
 });

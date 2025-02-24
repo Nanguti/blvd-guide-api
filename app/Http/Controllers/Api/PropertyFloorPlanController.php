@@ -17,7 +17,6 @@ class PropertyFloorPlanController extends Controller
 
     public function store(Request $request, Property $property)
     {
-        $this->authorize('update', $property);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -42,7 +41,6 @@ class PropertyFloorPlanController extends Controller
 
     public function update(Request $request, Property $property, PropertyFloorPlan $floorPlan)
     {
-        $this->authorize('update', $property);
 
         $validated = $request->validate([
             'title' => 'sometimes|string|max:255',
@@ -67,7 +65,6 @@ class PropertyFloorPlanController extends Controller
 
     public function destroy(Property $property, PropertyFloorPlan $floorPlan)
     {
-        $this->authorize('update', $property);
 
         if (Storage::disk('public')->exists($floorPlan->image)) {
             Storage::disk('public')->delete($floorPlan->image);

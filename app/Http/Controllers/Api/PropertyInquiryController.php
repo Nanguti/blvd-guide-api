@@ -6,13 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Property;
 use App\Models\PropertyInquiry;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PropertyInquiryController extends Controller
 {
     public function index(Property $property)
     {
-        $this->authorize('viewInquiries', $property);
-
         $inquiries = $property->inquiries()
             ->with('user')
             ->latest()
@@ -27,7 +26,7 @@ class PropertyInquiryController extends Controller
         ]);
 
         $inquiry = $property->inquiries()->create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'message' => $validated['message'],
             'status' => 'new'
         ]);
@@ -37,7 +36,6 @@ class PropertyInquiryController extends Controller
 
     public function show(Property $property, PropertyInquiry $inquiry)
     {
-        $this->authorize('view', $inquiry);
 
         if ($inquiry->property_id !== $property->id) {
             return response()->json(['message' => 'Inquiry not found for this property'], 404);
@@ -48,7 +46,6 @@ class PropertyInquiryController extends Controller
 
     public function updateStatus(Request $request, Property $property, PropertyInquiry $inquiry)
     {
-        $this->authorize('update', $inquiry);
 
         if ($inquiry->property_id !== $property->id) {
             return response()->json(['message' => 'Inquiry not found for this property'], 404);
@@ -65,7 +62,6 @@ class PropertyInquiryController extends Controller
 
     public function destroy(Property $property, PropertyInquiry $inquiry)
     {
-        $this->authorize('delete', $inquiry);
 
         if ($inquiry->property_id !== $property->id) {
             return response()->json(['message' => 'Inquiry not found for this property'], 404);

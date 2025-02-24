@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Property;
 use App\Models\Review;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ReviewController extends Controller
 {
@@ -27,7 +28,7 @@ class ReviewController extends Controller
         ]);
 
         $review = $property->reviews()->create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'rating' => $validated['rating'],
             'comment' => $validated['comment'],
             'status' => 'pending'
@@ -38,7 +39,6 @@ class ReviewController extends Controller
 
     public function update(Request $request, Property $property, Review $review)
     {
-        $this->authorize('update', $review);
 
         $validated = $request->validate([
             'rating' => 'sometimes|numeric|min:1|max:5',
@@ -52,7 +52,6 @@ class ReviewController extends Controller
 
     public function destroy(Property $property, Review $review)
     {
-        $this->authorize('delete', $review);
 
         $review->delete();
         return response()->json(null, 204);
@@ -60,7 +59,6 @@ class ReviewController extends Controller
 
     public function updateStatus(Request $request, Property $property, Review $review)
     {
-        $this->authorize('updateStatus', $review);
 
         $validated = $request->validate([
             'status' => 'required|in:pending,approved,rejected'

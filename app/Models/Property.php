@@ -31,7 +31,8 @@ class Property extends Model
         'features',
         'published_status',
         'user_id',
-        'city_id'
+        'city_id',
+        'featured_image'
     ];
 
     protected $casts = [
@@ -83,5 +84,20 @@ class Property extends Model
     public function city(): BelongsTo
     {
         return $this->belongsTo(City::class);
+    }
+
+    public function features(): BelongsToMany
+    {
+        return $this->belongsToMany(Feature::class);
+    }
+
+    public function inquiries(): HasMany
+    {
+        return $this->hasMany(PropertyInquiry::class);
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
     }
 }

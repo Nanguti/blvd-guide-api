@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Property;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,10 +43,9 @@ class PropertyController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $data = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
-            'type' => ['required', Rule::in(['sale', 'rent'])],
             'property_type_id' => 'required|exists:property_types,id',
             'property_status_id' => 'required|exists:property_statuses,id',
             'price' => 'required|numeric|min:0',
@@ -59,75 +57,94 @@ class PropertyController extends Controller
             'address' => 'required|string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
-            'features' => 'nullable|array',
-            'published_status' => ['required', Rule::in(['draft', 'published', 'archived'])],
+            'published_status' => 'required|in:draft,published',
             'city_id' => 'required|exists:cities,id',
-            'amenities' => 'nullable|array|exists:amenities,id'
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'exists:amenities,id',
+            'features' => 'nullable|array',
+            'features.*' => 'exists:features,id',
+            'featured_image' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
-
-        $property = Property::create($validated + ['user_id' => Auth::id()]);
-
-        if (isset($validated['amenities'])) {
-            $property->amenities()->sync($validated['amenities']);
+        // Upload featured image
+        if ($request->hasFile('featured_image')) {
+            $image = $request->file('featured_image');
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('featured_images'), $imageName);
+            $data['featured_image'] = $imageName;
         }
 
-        return response()->json($property->load(['propertyType', 'propertyStatus', 'amenities']), 201);
+        $property = Auth::user()->properties()->create($data);
+
+        if ($request->has('amenities')) {
+            $property->amenities()->attach($request->amenities);
+        }
+
+        if ($request->has('features')) {
+            $property->features()->attach($request->features);
+        }
+
+        return $property->load(['amenities', 'features', 'propertyType', 'propertyStatus', 'city']);
     }
 
     public function show(Property $property)
     {
-        return response()->json($property->load([
+        return $property->load([
+            'amenities',
+            'features',
             'propertyType',
             'propertyStatus',
-            'user',
             'city',
             'media',
-            'floorPlans',
-            'amenities',
-            'reviews' => function ($query) {
-                $query->where('status', 'approved');
-            }
-        ]));
+            'floorPlans'
+        ]);
     }
 
     public function update(Request $request, Property $property)
     {
-        $this->authorize('update', $property);
+        if ($property->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
 
-        $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'type' => ['sometimes', Rule::in(['sale', 'rent'])],
-            'property_type_id' => 'sometimes|exists:property_types,id',
-            'property_status_id' => 'sometimes|exists:property_statuses,id',
-            'price' => 'sometimes|numeric|min:0',
-            'area' => 'sometimes|numeric|min:0',
+        $data = $request->validate([
+            'title' => 'string|max:255',
+            'description' => 'string',
+            'property_type_id' => 'exists:property_types,id',
+            'property_status_id' => 'exists:property_statuses,id',
+            'price' => 'numeric|min:0',
+            'area' => 'numeric|min:0',
             'bedrooms' => 'nullable|integer|min:0',
             'bathrooms' => 'nullable|integer|min:0',
             'garages' => 'nullable|integer|min:0',
             'year_built' => 'nullable|integer|min:1800',
-            'address' => 'sometimes|string',
+            'address' => 'string',
             'latitude' => 'nullable|numeric',
             'longitude' => 'nullable|numeric',
+            'published_status' => 'in:draft,published',
+            'city_id' => 'exists:cities,id',
+            'amenities' => 'nullable|array',
+            'amenities.*' => 'exists:amenities,id',
             'features' => 'nullable|array',
-            'published_status' => ['sometimes', Rule::in(['draft', 'published', 'archived'])],
-            'city_id' => 'sometimes|exists:cities,id',
-            'amenities' => 'nullable|array|exists:amenities,id'
+            'features.*' => 'exists:features,id',
         ]);
 
-        $property->update($validated);
+        $property->update($data);
 
-        if (isset($validated['amenities'])) {
-            $property->amenities()->sync($validated['amenities']);
+        if ($request->has('amenities')) {
+            $property->amenities()->sync($request->amenities);
         }
 
-        return response()->json($property->load(['propertyType', 'propertyStatus', 'amenities']));
+        if ($request->has('features')) {
+            $property->features()->sync($request->features);
+        }
+
+        return $property->load(['amenities', 'features', 'propertyType', 'propertyStatus', 'city']);
     }
 
     public function destroy(Property $property)
     {
-        $this->authorize('delete', $property);
-
+        if ($property->user_id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
         $property->delete();
         return response()->json(null, 204);
     }

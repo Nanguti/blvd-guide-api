@@ -6,12 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Property;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ScheduleController extends Controller
 {
     public function index(Property $property)
     {
-        $this->authorize('viewSchedules', $property);
 
         $schedules = $property->schedules()
             ->with('user')
@@ -29,7 +29,7 @@ class ScheduleController extends Controller
         ]);
 
         $schedule = $property->schedules()->create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'date' => $validated['date'],
             'time' => $validated['time'],
             'message' => $validated['message'],
@@ -41,7 +41,6 @@ class ScheduleController extends Controller
 
     public function show(Property $property, Schedule $schedule)
     {
-        $this->authorize('view', $schedule);
 
         if ($schedule->property_id !== $property->id) {
             return response()->json(['message' => 'Schedule not found for this property'], 404);
@@ -50,9 +49,28 @@ class ScheduleController extends Controller
         return response()->json($schedule->load('user'));
     }
 
+    public function update(Request $request, Property $property, Schedule $schedule)
+    {
+        //if field is not passed, use the current value
+        $validated = [];
+        if ($request->has('date')) {
+            $validated['date'] = $request->date;
+        }
+        if ($request->has('time')) {
+            $validated['time'] = $request->time;
+        }
+        if ($request->has('message')) {
+            $validated['message'] = $request->message;
+        }
+
+
+        $schedule->update($validated);
+
+        return response()->json($schedule->load('user'));
+    }
+
     public function updateStatus(Request $request, Property $property, Schedule $schedule)
     {
-        $this->authorize('update', $schedule);
 
         if ($schedule->property_id !== $property->id) {
             return response()->json(['message' => 'Schedule not found for this property'], 404);
@@ -69,7 +87,6 @@ class ScheduleController extends Controller
 
     public function destroy(Property $property, Schedule $schedule)
     {
-        $this->authorize('delete', $schedule);
 
         if ($schedule->property_id !== $property->id) {
             return response()->json(['message' => 'Schedule not found for this property'], 404);

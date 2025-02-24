@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
+use App\Models\Property;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -88,9 +90,116 @@ class UserController extends Controller
         return response()->json($properties);
     }
 
-    public function favorites(User $user)
+    public function userFavorites(User $user)
     {
-        $favorites = $user->favorites()->with('property')->paginate(10);
+        $favorites = $user->favorites()->with('property')
+            ->paginate(10);
         return response()->json($favorites);
+    }
+
+    /**
+     * Add property to user's favorites
+     */
+    public function addFavorite(Property $property)
+    {
+        $user = Auth::user();
+
+        if (!$user->favorites()->where('property_id', $property->id)->exists()) {
+            $user->favorites()->attach($property->id);
+            return response()->json(['message' => 'Property added to favorites']);
+        }
+
+        return response()->json(['message' => 'Property already in favorites'], 400);
+    }
+
+    /**
+     * Remove property from user's favorites
+     */
+    public function removeFavorite(Property $property)
+    {
+        $user = Auth::user();
+
+        if ($user->favorites()->where('property_id', $property->id)->exists()) {
+            $user->favorites()->detach($property->id);
+            return response()->json(['message' => 'Property removed from favorites']);
+        }
+
+        return response()->json(['message' => 'Property not in favorites'], 400);
+    }
+
+    /**
+     * Get user's favorite properties
+     */
+    public function myFavorites()
+    {
+        return Auth::user()->favorites()
+            ->with(['propertyType', 'propertyStatus', 'city'])
+            ->paginate(12);
+    }
+
+    /**
+     * Add property to user's compare list
+     */
+    public function addCompare(Property $property)
+    {
+        $user = Auth::user();
+
+        // Optional: Limit number of properties that can be compared
+        if ($user->compares()->count() >= 4) {
+            return response()->json(['message' => 'Compare list is full (max 4 properties)'], 400);
+        }
+
+        if (!$user->compares()->where('property_id', $property->id)->exists()) {
+            $user->compares()->attach($property->id);
+            return response()->json(['message' => 'Property added to compare list']);
+        }
+
+        return response()->json(['message' => 'Property already in compare list'], 400);
+    }
+
+    /**
+     * Remove property from user's compare list
+     */
+    public function removeCompare(Property $property)
+    {
+        $user = Auth::user();
+
+        if ($user->compares()->where('property_id', $property->id)->exists()) {
+            $user->compares()->detach($property->id);
+            return response()->json(['message' => 'Property removed from compare list']);
+        }
+
+        return response()->json(['message' => 'Property not in compare list'], 400);
+    }
+
+    /**
+     * Get user's compare list
+     */
+    public function myCompares()
+    {
+        return Auth::user()->compares()
+            ->with(['propertyType', 'propertyStatus', 'city', 'amenities', 'features'])
+            ->paginate(12);
+    }
+
+    /**
+     * Get properties being compared
+     */
+    public function getComparedProperties()
+    {
+        return Auth::user()->compares()
+            ->with([
+                'propertyType',
+                'propertyStatus',
+                'city',
+                'amenities',
+                'features',
+                'media',
+                'floorPlans',
+                'user' => function ($query) {
+                    $query->select('id', 'name', 'email', 'phone', 'profile_image');
+                }
+            ])
+            ->get();
     }
 }

@@ -17,30 +17,30 @@ class PropertyMediaController extends Controller
 
     public function store(Request $request, Property $property)
     {
-        $this->authorize('update', $property);
-
-        $validated = $request->validate([
-            'type' => 'required|in:image,video',
-            'file' => 'required|file|mimes:jpg,jpeg,png,mp4|max:10240', // 10MB max
-            'is_featured' => 'boolean',
-            'sort_order' => 'integer'
+        $request->validate([
+            'images.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'type' => 'required|in:image,video,virtual_tour'
         ]);
 
-        $path = $request->file('file')->store('property-media', 'public');
+        $mediaItems = [];
 
-        $media = $property->media()->create([
-            'type' => $validated['type'],
-            'url' => $path,
-            'is_featured' => $validated['is_featured'] ?? false,
-            'sort_order' => $validated['sort_order'] ?? 0
-        ]);
+        if ($request->hasFile('images')) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('properties/' . $property->id . '/media', 'public');
 
-        return response()->json($media, 201);
+                $mediaItems[] = $property->media()->create([
+                    'url' => $path,
+                    'type' => $request->type,
+                    'sort_order' => $property->media()->count() + 1
+                ]);
+            }
+        }
+
+        return response()->json($mediaItems, 201);
     }
 
     public function update(Request $request, Property $property, PropertyMedia $media)
     {
-        $this->authorize('update', $property);
 
         $validated = $request->validate([
             'is_featured' => 'boolean',
@@ -54,7 +54,6 @@ class PropertyMediaController extends Controller
 
     public function destroy(Property $property, PropertyMedia $media)
     {
-        $this->authorize('update', $property);
 
         // Delete the file from storage
         if (Storage::disk('public')->exists($media->url)) {
@@ -67,7 +66,6 @@ class PropertyMediaController extends Controller
 
     public function reorder(Request $request, Property $property)
     {
-        $this->authorize('update', $property);
 
         $validated = $request->validate([
             'media' => 'required|array',

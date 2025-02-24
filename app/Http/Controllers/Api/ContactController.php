@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use App\Mail\NewContactMail;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ContactController extends Controller
 {
@@ -13,7 +16,7 @@ class ContactController extends Controller
 
     public function index()
     {
-        $this->authorize('viewAny', Contact::class);
+        // $this->authorize('viewAny', Contact::class);
 
         $contacts = Contact::latest()->paginate(20);
         return response()->json($contacts);
@@ -29,6 +32,14 @@ class ContactController extends Controller
         ]);
 
         $contact = Contact::create($validated + ['status' => 'new']);
+
+        try {
+            Mail::to('info@blvdguide.com')
+                ->queue(new NewContactMail($contact));
+        } catch (\Exception $e) {
+            Log::error('Failed to queue email: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to process email'], 500);
+        }
 
         return response()->json($contact, 201);
     }

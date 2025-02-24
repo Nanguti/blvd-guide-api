@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\PropertyType;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class PropertyTypeController extends Controller
 {
@@ -22,6 +23,12 @@ class PropertyTypeController extends Controller
             'description' => 'nullable|string'
         ]);
 
+        $slug = Str::slug($validated['name']);
+        if (PropertyType::where('slug', $slug)->exists()) {
+            return response()->json(['message' => 'Property type already exists'], 400);
+        }
+
+        $validated['slug'] = $slug;
         $type = PropertyType::create($validated);
 
         return response()->json($type, 201);
@@ -39,10 +46,18 @@ class PropertyTypeController extends Controller
     public function update(Request $request, PropertyType $propertyType)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('property_types')->ignore($propertyType->id)],
+            'name' => ['required', 'string', 'max:255', Rule::unique('property_types')
+                ->ignore($propertyType->id)],
             'description' => 'nullable|string'
         ]);
-
+        //check if name has changed
+        if ($request->has('name')) {
+            $slug = Str::slug($validated['name']);
+            if (PropertyType::where('slug', $slug)->exists()) {
+                return response()->json(['message' => 'Property type already exists'], 400);
+            }
+            $validated['slug'] = $slug;
+        }
         $propertyType->update($validated);
 
         return response()->json($propertyType);

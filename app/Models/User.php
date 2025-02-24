@@ -87,7 +87,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function favorites(): BelongsToMany
     {
-        return $this->belongsToMany(Property::class, 'favorites');
+        return $this->belongsToMany(Property::class, 'favorites')
+            ->withTimestamps();
     }
 
     /**
@@ -95,7 +96,8 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function compares(): BelongsToMany
     {
-        return $this->belongsToMany(Property::class, 'compares');
+        return $this->belongsToMany(Property::class, 'compares')
+            ->withTimestamps();
     }
 
     /**
@@ -112,5 +114,21 @@ class User extends Authenticatable implements MustVerifyEmail
     public function scopeAgents($query)
     {
         return $query->where('role', 'agent');
+    }
+
+    /**
+     * Get the subscriptions associated with the user.
+     */
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(Subscription::class);
+    }
+
+    /**
+     * Get the subscription plan associated with the user.
+     */
+    public function subscriptionPlan(): BelongsTo
+    {
+        return $this->belongsTo(SubscriptionPlan::class);
     }
 }
