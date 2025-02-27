@@ -78,4 +78,10 @@ class StateController extends Controller
         $state->delete();
         return response()->json(null, 204);
     }
+
+    public function getState($id)
+    {
+        $state = State::find($id);
+        return response()->json($state);
+    }
 }

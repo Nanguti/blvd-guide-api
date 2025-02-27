@@ -80,4 +80,13 @@ class CityController extends Controller
         $city->delete();
         return response()->json(null, 204);
     }
+
+    public function getCity($id)
+    {
+        $city = City::find($id);
+        if (!$city) {
+            return response()->json(['message' => 'City not found'], 404);
+        }
+        return response()->json($city);
+    }
 }
