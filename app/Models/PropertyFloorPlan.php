@@ -16,7 +16,11 @@ class PropertyFloorPlan extends Model
         'description',
         'image',
         'price',
-        'size'
+        'size',
+        'bathrooms',
+        'bedrooms',
+
+
     ];
 
     protected $casts = [

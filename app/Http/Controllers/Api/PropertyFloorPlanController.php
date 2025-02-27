@@ -18,22 +18,26 @@ class PropertyFloorPlanController extends Controller
     public function store(Request $request, Property $property)
     {
 
-        $validated = $request->validate([
+        $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
-            'image' => 'required|file|mimes:jpg,jpeg,png|max:5120', // 5MB max
+            'image' => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'price' => 'nullable|numeric|min:0',
             'size' => 'nullable|numeric|min:0'
         ]);
 
-        $path = $request->file('image')->store('floor-plans', 'public');
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('floor-plans', 'public');
+        } else {
+            $path = null;
+        }
 
         $floorPlan = $property->floorPlans()->create([
-            'title' => $validated['title'],
-            'description' => $validated['description'],
+            'title' => $request->title,
+            'description' => $request->description,
             'image' => $path,
-            'price' => $validated['price'],
-            'size' => $validated['size']
+            'price' => $request->price,
+            'size' => $request->size
         ]);
 
         return response()->json($floorPlan, 201);
@@ -66,9 +70,9 @@ class PropertyFloorPlanController extends Controller
     public function destroy(Property $property, PropertyFloorPlan $floorPlan)
     {
 
-        if (Storage::disk('public')->exists($floorPlan->image)) {
-            Storage::disk('public')->delete($floorPlan->image);
-        }
+        // if (Storage::disk('public')->exists($floorPlan->image)) {
+        //     Storage::disk('public')->delete($floorPlan->image);
+        // }
 
         $floorPlan->delete();
         return response()->json(null, 204);
