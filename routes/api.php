@@ -47,7 +47,7 @@ Route::prefix('v1')->group(function () {
     Route::apiResource('cities.areas', AreaController::class);
     Route::get('/states/{id}', [StateController::class, 'getState']);
     Route::get('/cities/{id}', [CityController::class, 'getCity']);
-
+    Route::get('/cities', [CityController::class, 'getCities']);
 
     // Property related public routes
     Route::get('properties', [PropertyController::class, 'index']);

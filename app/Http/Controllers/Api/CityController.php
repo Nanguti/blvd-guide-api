@@ -34,6 +34,15 @@ class CityController extends Controller
         return response()->json($city, 201);
     }
 
+    public function getCities()
+    {
+        $cities = City::all();
+        if (!$cities) {
+            return response()->json(['message' => 'No cities found'], 404);
+        }
+        return response()->json($cities);
+    }
+
     public function show(State $state, City $city)
     {
         if ($city->state_id !== $state->id) {
