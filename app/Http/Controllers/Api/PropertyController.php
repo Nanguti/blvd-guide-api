@@ -214,7 +214,9 @@ class PropertyController extends Controller
             'propertyStatus',
             'city',
             'media',
-            'floorPlans'
+            'floorPlans',
+            'inquiries',
+            'schedules'
         ]);
     }
 

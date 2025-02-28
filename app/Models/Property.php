@@ -142,11 +142,11 @@ class Property extends Model
 
     public function inquiries(): HasMany
     {
-        return $this->hasMany(PropertyInquiry::class);
+        return $this->hasMany(PropertyInquiry::class)->with('user');
     }
 
     public function schedules(): HasMany
     {
-        return $this->hasMany(Schedule::class);
+        return $this->hasMany(Schedule::class)->with('user');
     }
 }
