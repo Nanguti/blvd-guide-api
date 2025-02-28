@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Property;
 use App\Models\Schedule;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\ScheduleCreated;
 use OpenApi\Annotations as OA;
 
 /**
@@ -97,6 +100,12 @@ class ScheduleController extends Controller
             'message' => $validated['message'],
             'status' => 'pending'
         ]);
+        //send email to admin and property owner
+        $admin = User::where('role', 'admin')->first();
+        $propertyOwner = $property->user;
+
+        Mail::to($admin->email)->send(new ScheduleCreated($schedule));
+        Mail::to($propertyOwner->email)->send(new ScheduleCreated($schedule));
 
         return response()->json($schedule->load('user'), 201);
     }

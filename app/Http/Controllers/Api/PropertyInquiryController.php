@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\Property;
 use App\Models\PropertyInquiry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PropertyInquiryCreated;
 use OpenApi\Annotations as OA;
 
 /**
@@ -90,6 +93,13 @@ class PropertyInquiryController extends Controller
             'message' => $validated['message'],
             'status' => 'new'
         ]);
+
+        //when inquiry is created, send email to admin and property owner
+        $admin = User::where('role', 'admin')->first();
+        $propertyOwner = $property->user;
+
+        Mail::to($admin->email)->send(new PropertyInquiryCreated($inquiry));
+        Mail::to($propertyOwner->email)->send(new PropertyInquiryCreated($inquiry));
 
         return response()->json($inquiry->load('user'), 201);
     }
