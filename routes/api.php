@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\CompareController;
 use App\Http\Controllers\Api\FeatureController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\SubscriptionPlanController;
+use App\Http\Controllers\Api\SettingController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -171,6 +172,10 @@ Route::prefix('v1')->group(function () {
 
         // Compare routes
         Route::get('my/compared-properties', [UserController::class, 'getComparedProperties']);
+
+        // Settings routes
+        Route::get('/settings', [SettingController::class, 'index']);
+        Route::patch('/settings/{setting}', [SettingController::class, 'update']);
     });
     require __DIR__ . '/auth.php';
 });

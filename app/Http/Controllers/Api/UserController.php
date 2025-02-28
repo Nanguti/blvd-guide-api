@@ -9,15 +9,75 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use App\Models\Property;
 use Illuminate\Support\Facades\Auth;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Tag(
+ *     name="Users",
+ *     description="API Endpoints for managing users"
+ * )
+ */
 class UserController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/users",
+     *     summary="Get list of users",
+     *     tags={"Users"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="role",
+     *         in="query",
+     *         required=false,
+     *         description="Filter users by role",
+     *         @OA\Schema(type="string", enum={"user", "agent", "agency", "admin"})
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of users",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/User")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function index()
     {
         $users = User::paginate(10);
         return response()->json($users);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/users",
+     *     summary="Create a new user",
+     *     tags={"Users"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name", "email", "password", "role"},
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="password", type="string", format="password", minLength=8),
+     *             @OA\Property(property="role", type="string", enum={"user", "agent", "agency", "admin"}),
+     *             @OA\Property(property="phone", type="string", nullable=true),
+     *             @OA\Property(property="avatar", type="string", format="binary", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User created successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -41,11 +101,68 @@ class UserController extends Controller
         return response()->json($user, 201);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/users/{user}",
+     *     summary="Get user details",
+     *     tags={"Users"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User details",
+     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User not found"
+     *     )
+     * )
+     */
     public function show(User $user)
     {
         return response()->json($user->load(['properties', 'agency', 'favorites', 'reviews']));
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/users/{user}",
+     *     summary="Update user details",
+     *     tags={"Users"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", maxLength=255),
+     *             @OA\Property(property="email", type="string", format="email"),
+     *             @OA\Property(property="password", type="string", format="password", minLength=8),
+     *             @OA\Property(property="role", type="string", enum={"user", "agent", "agency", "admin"}),
+     *             @OA\Property(property="phone", type="string", nullable=true),
+     *             @OA\Property(property="avatar", type="string", format="binary", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User updated successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/User")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function update(Request $request, User $user)
     {
         $validated = $request->validate([
@@ -72,6 +189,28 @@ class UserController extends Controller
         return response()->json($user);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/users/{user}",
+     *     summary="Delete a user",
+     *     tags={"Users"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="user",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="User deleted successfully"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized to delete this user"
+     *     )
+     * )
+     */
     public function destroy(User $user)
     {
         $user->delete();

@@ -7,9 +7,34 @@ use App\Models\Property;
 use App\Models\PropertyFloorPlan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Tag(
+ *     name="Property Floor Plans",
+ *     description="API Endpoints for managing property floor plans"
+ * )
+ */
 class PropertyFloorPlanController extends Controller
 {
+    /**
+     * @OA\Get(
+     *     path="/api/properties/{property}/floor-plans",
+     *     summary="Get list of property floor plans",
+     *     tags={"Property Floor Plans"},
+     *     @OA\Parameter(
+     *         name="property",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of property floor plans",
+     *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/PropertyFloorPlan"))
+     *     )
+     * )
+     */
     public function index(Property $property)
     {
         return response()->json($property->floorPlans);

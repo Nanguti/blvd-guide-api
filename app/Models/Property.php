@@ -9,6 +9,55 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @OA\Schema(
+ *     schema="Property",
+ *     required={"title", "description", "price", "area", "address", "city_id", "property_type_id", "property_status_id"},
+ *     @OA\Property(property="id", type="integer", format="int64"),
+ *     @OA\Property(property="title", type="string", maxLength=255),
+ *     @OA\Property(property="description", type="string"),
+ *     @OA\Property(property="property_type_id", type="integer"),
+ *     @OA\Property(property="property_status_id", type="integer"),
+ *     @OA\Property(property="price", type="number", format="float"),
+ *     @OA\Property(property="area", type="number", format="float"),
+ *     @OA\Property(property="bedrooms", type="integer", nullable=true),
+ *     @OA\Property(property="bathrooms", type="integer", nullable=true),
+ *     @OA\Property(property="garages", type="integer", nullable=true),
+ *     @OA\Property(property="year_built", type="integer", nullable=true),
+ *     @OA\Property(property="address", type="string"),
+ *     @OA\Property(property="latitude", type="number", format="float", nullable=true),
+ *     @OA\Property(property="longitude", type="number", format="float", nullable=true),
+ *     @OA\Property(property="published_status", type="string", enum={"draft", "published"}),
+ *     @OA\Property(property="city_id", type="integer"),
+ *     @OA\Property(property="user_id", type="integer"),
+ *     @OA\Property(property="featured_image", type="string", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(
+ *         property="amenities",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Amenity")
+ *     ),
+ *     @OA\Property(
+ *         property="features",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/Feature")
+ *     ),
+ *     @OA\Property(property="property_type", ref="#/components/schemas/PropertyType"),
+ *     @OA\Property(property="property_status", ref="#/components/schemas/PropertyStatus"),
+ *     @OA\Property(property="city", ref="#/components/schemas/City"),
+ *     @OA\Property(
+ *         property="media",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/PropertyMedia")
+ *     ),
+ *     @OA\Property(
+ *         property="floor_plans",
+ *         type="array",
+ *         @OA\Items(ref="#/components/schemas/PropertyFloorPlan")
+ *     )
+ * )
+ */
 class Property extends Model
 {
     use HasFactory, SoftDeletes;

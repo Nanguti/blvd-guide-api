@@ -12,7 +12,30 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use OpenApi\Annotations as OA;
 
+/**
+ * @OA\Schema(
+ *     schema="User",
+ *     required={"name", "email", "password", "role"},
+ *     @OA\Property(property="id", type="integer", format="int64"),
+ *     @OA\Property(property="name", type="string", maxLength=255),
+ *     @OA\Property(property="email", type="string", format="email"),
+ *     @OA\Property(property="phone", type="string", nullable=true),
+ *     @OA\Property(property="role", type="string", enum={"user", "agent", "admin"}),
+ *     @OA\Property(property="profile_image", type="string", format="url", nullable=true),
+ *     @OA\Property(property="bio", type="string", nullable=true),
+ *     @OA\Property(property="social_media_links", type="object", nullable=true),
+ *     @OA\Property(property="agency_id", type="integer", nullable=true),
+ *     @OA\Property(property="license_number", type="string", nullable=true),
+ *     @OA\Property(property="experience_years", type="integer", nullable=true),
+ *     @OA\Property(property="specialties", type="array", @OA\Items(type="string"), nullable=true),
+ *     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time"),
+ *     @OA\Property(property="deleted_at", type="string", format="date-time", nullable=true)
+ * )
+ */
 class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */

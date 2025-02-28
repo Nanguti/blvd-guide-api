@@ -8,10 +8,67 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @OA\Tag(
+ *     name="Properties",
+ *     description="API Endpoints for property management"
+ * )
+ */
 class PropertyController extends Controller
 {
     use AuthorizesRequests;
 
+    /**
+     * @OA\Get(
+     *     path="/api/v1/properties",
+     *     summary="Get list of properties",
+     *     tags={"Properties"},
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Filter by property type",
+     *         required=false,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Parameter(
+     *         name="property_type_id",
+     *         in="query",
+     *         description="Filter by property type ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="city_id",
+     *         in="query",
+     *         description="Filter by city ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="min_price",
+     *         in="query",
+     *         description="Minimum price",
+     *         required=false,
+     *         @OA\Schema(type="number")
+     *     ),
+     *     @OA\Parameter(
+     *         name="max_price",
+     *         in="query",
+     *         description="Maximum price",
+     *         required=false,
+     *         @OA\Schema(type="number")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of properties",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Property")),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
+     */
     public function index(Request $request)
     {
         $query = Property::query()
@@ -41,6 +98,46 @@ class PropertyController extends Controller
         return response()->json($query->paginate(12));
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/properties",
+     *     summary="Create a new property",
+     *     tags={"Properties"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"title","description","property_type_id","property_status_id","price","area","address","published_status","city_id"},
+     *             @OA\Property(property="title", type="string"),
+     *             @OA\Property(property="description", type="string"),
+     *             @OA\Property(property="property_type_id", type="integer"),
+     *             @OA\Property(property="property_status_id", type="integer"),
+     *             @OA\Property(property="price", type="number"),
+     *             @OA\Property(property="area", type="number"),
+     *             @OA\Property(property="bedrooms", type="integer"),
+     *             @OA\Property(property="bathrooms", type="integer"),
+     *             @OA\Property(property="garages", type="integer"),
+     *             @OA\Property(property="year_built", type="integer"),
+     *             @OA\Property(property="address", type="string"),
+     *             @OA\Property(property="latitude", type="number"),
+     *             @OA\Property(property="longitude", type="number"),
+     *             @OA\Property(property="published_status", type="string", enum={"draft","published"}),
+     *             @OA\Property(property="city_id", type="integer"),
+     *             @OA\Property(property="amenities", type="array", @OA\Items(type="integer")),
+     *             @OA\Property(property="features", type="array", @OA\Items(type="integer"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Property created successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Property")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error"
+     *     )
+     * )
+     */
     public function store(Request $request)
     {
         $data = $request->validate([
@@ -86,6 +183,28 @@ class PropertyController extends Controller
         return $property->load(['amenities', 'features', 'propertyType', 'propertyStatus', 'city']);
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/v1/properties/{property}",
+     *     summary="Get property details",
+     *     tags={"Properties"},
+     *     @OA\Parameter(
+     *         name="property",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Property details",
+     *         @OA\JsonContent(ref="#/components/schemas/Property")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Property not found"
+     *     )
+     * )
+     */
     public function show(Property $property)
     {
         return $property->load([
@@ -99,6 +218,37 @@ class PropertyController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Put(
+     *     path="/api/v1/properties/{property}",
+     *     summary="Update property details",
+     *     tags={"Properties"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="property",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/Property")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Property updated successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Property")
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized action"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Property not found"
+     *     )
+     * )
+     */
     public function update(Request $request, Property $property)
     {
         if ($property->user_id !== Auth::id()) {
@@ -140,6 +290,32 @@ class PropertyController extends Controller
         return $property->load(['amenities', 'features', 'propertyType', 'propertyStatus', 'city']);
     }
 
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/properties/{property}",
+     *     summary="Delete a property",
+     *     tags={"Properties"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="property",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=204,
+     *         description="Property deleted successfully"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized action"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Property not found"
+     *     )
+     * )
+     */
     public function destroy(Property $property)
     {
         if ($property->user_id !== Auth::id()) {
@@ -149,6 +325,27 @@ class PropertyController extends Controller
         return response()->json(null, 204);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/properties/{property}/favorite",
+     *     summary="Toggle property favorite status",
+     *     tags={"Properties"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="property",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Favorite status toggled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="is_favorited", type="boolean")
+     *         )
+     *     )
+     * )
+     */
     public function toggleFavorite(Property $property)
     {
         $user = Auth::user();
@@ -159,6 +356,27 @@ class PropertyController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/properties/{property}/compare",
+     *     summary="Toggle property compare status",
+     *     tags={"Properties"},
+     *     security={{"bearerAuth": {}}},
+     *     @OA\Parameter(
+     *         name="property",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Compare status toggled",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="is_compared", type="boolean")
+     *         )
+     *     )
+     * )
+     */
     public function toggleCompare(Property $property)
     {
         $user = Auth::user();
