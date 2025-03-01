@@ -98,6 +98,22 @@ class PropertyController extends Controller
         return response()->json($query->paginate(12));
     }
 
+    //featured properties. where published_status is published and featured true and limit 6
+    public function featuredProperties()
+    {
+        return response()->json(Property::with(['propertyType', 'user', 'city'])
+            ->where('published_status', 'published')
+            ->where('featured', true)->limit(6)->latest()->get());
+    }
+
+    //Mark property as featured
+    public function markFeatured(Property $property)
+    {
+        $property->featured = true;
+        $property->save();
+        return response()->json($property);
+    }
+
     /**
      * @OA\Post(
      *     path="/api/v1/properties",

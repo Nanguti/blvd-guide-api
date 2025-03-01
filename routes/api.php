@@ -58,6 +58,8 @@ Route::prefix('v1')->group(function () {
     Route::get('amenities', [AmenityController::class, 'index']);
     Route::get('agents', [UserController::class, 'agents']);
     Route::get('features', [FeatureController::class, 'index']);
+    Route::get('featured-properties', [PropertyController::class, 'featuredProperties']);
+    Route::post('properties/{property}/mark-featured', [PropertyController::class, 'markFeatured']);
 
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
