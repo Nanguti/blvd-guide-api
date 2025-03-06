@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Agency;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 use OpenApi\Annotations as OA;
 
 /**
@@ -16,6 +17,13 @@ use OpenApi\Annotations as OA;
  */
 class AgencyController extends Controller
 {
+    public function __construct()
+    {
+        $this->authorizeResource(Agency::class, 'agency', [
+            'except' => ['index', 'show', 'agents']
+        ]);
+    }
+
     /**
      * @OA\Get(
      *     path="/api/agencies",

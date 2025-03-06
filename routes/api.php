@@ -64,13 +64,8 @@ Route::prefix('v1')->group(function () {
     // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
         // User routes
-        Route::apiResource('users', UserController::class);
         Route::get('users/{user}/properties', [UserController::class, 'properties']);
         Route::get('users/{user}/favorites', [UserController::class, 'userFavorites']);
-
-        // Agency routes
-        Route::apiResource('agencies', AgencyController::class);
-        Route::get('agencies/{agency}/agents', [AgencyController::class, 'agents']);
 
         // Property management routes
         Route::post('properties', [PropertyController::class, 'store']);
@@ -123,6 +118,11 @@ Route::prefix('v1')->group(function () {
 
         // Admin only routes
         Route::middleware('can:admin')->group(function () {
+            Route::apiResource('users', UserController::class);
+
+            // Agency routes
+            Route::apiResource('agencies', AgencyController::class);
+            Route::get('agencies/{agency}/agents', [AgencyController::class, 'agents']);
             Route::apiResource('property-types', PropertyTypeController::class)
                 ->except(['index']);
             Route::apiResource('property-statuses', PropertyStatusController::class)
