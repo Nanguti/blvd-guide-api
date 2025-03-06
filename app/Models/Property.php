@@ -135,6 +135,18 @@ class Property extends Model
         return $this->belongsTo(City::class);
     }
 
+    public function favorites(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'favorites')
+            ->withTimestamps();
+    }
+
+    public function compares(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'compares')
+            ->withTimestamps();
+    }
+
     public function features(): BelongsToMany
     {
         return $this->belongsToMany(Feature::class);

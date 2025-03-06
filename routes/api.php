@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\FeatureController;
 use App\Http\Controllers\Api\SubscriptionController;
 use App\Http\Controllers\Api\SubscriptionPlanController;
 use App\Http\Controllers\Api\SettingController;
+use App\Http\Controllers\Api\AgentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -179,5 +180,11 @@ Route::prefix('v1')->group(function () {
         Route::get('/settings', [SettingController::class, 'index']);
         Route::patch('/settings/{setting}', [SettingController::class, 'update']);
     });
+
+    Route::get('/properties/filter/{type}', [PropertyController::class, 'filterByType']);
+
+    Route::apiResource('agents', AgentController::class);
+    Route::get('agents/{agent}/properties', [AgentController::class, 'properties']);
+
     require __DIR__ . '/auth.php';
 });

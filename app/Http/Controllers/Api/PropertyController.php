@@ -98,6 +98,87 @@ class PropertyController extends Controller
         return response()->json($query->paginate(12));
     }
 
+    /**
+     * @OA\Get(
+     *     path="/api/v1/properties/filter/{type}",
+     *     summary="Filter properties by type",
+     *     tags={"Properties"},
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="path",
+     *         description="Filter type (for-sale, for-rent, new-development, recently-sold)",
+     *         required=true,
+     *         @OA\Schema(type="string")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Filtered properties",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/Property"))
+     *         )
+     *     )
+     * )
+     */
+    public function filterByType(Request $request, $type)
+    {
+        $query = Property::query()
+            ->with(['propertyType', 'propertyStatus', 'user', 'city', 'media'])
+            ->where('published_status', 'published');
+
+        switch ($type) {
+            case 'for-sale':
+                $query->whereHas('propertyStatus', function ($q) {
+                    $q->where('name', 'For Sale');
+                });
+                break;
+            case 'for-rent':
+                $query->whereHas('propertyStatus', function ($q) {
+                    $q->where('name', 'For Rent');
+                });
+                break;
+            case 'new-development':
+                $query->where('year_built', '>=', date('Y'))
+                    ->whereHas('propertyStatus', function ($q) {
+                        $q->where('name', 'For Sale');
+                    });
+                break;
+            case 'recently-sold':
+                $query->whereHas('propertyStatus', function ($q) {
+                    $q->where('name', 'Sold');
+                })
+                    ->orderBy('updated_at', 'desc');
+                break;
+        }
+
+        // Additional filters
+        if ($request->has('min_price')) {
+            $query->where('price', '>=', $request->min_price);
+        }
+        if ($request->has('max_price')) {
+            $query->where('price', '<=', $request->max_price);
+        }
+        if ($request->has('bedrooms')) {
+            $query->where('bedrooms', '>=', $request->bedrooms);
+        }
+        if ($request->has('bathrooms')) {
+            $query->where('bathrooms', '>=', $request->bathrooms);
+        }
+        if ($request->has('city_id')) {
+            $query->where('city_id', $request->city_id);
+        }
+        if ($request->has('property_type_id')) {
+            $query->where('property_type_id', $request->property_type_id);
+        }
+
+        // Sort options
+        $sortBy = $request->input('sort_by', 'created_at');
+        $sortOrder = $request->input('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        return response()->json($query->paginate(12));
+    }
+
     //featured properties. where published_status is published and featured true and limit 6
     public function featuredProperties()
     {
@@ -370,7 +451,7 @@ class PropertyController extends Controller
         $user->favorites()->toggle($property->id);
 
         return response()->json([
-            'is_favorited' => $user->favorites()->where('property_id', $property->id)->exists()
+            'is_favorited' => $user->favorites()->where('properties.id', $property->id)->exists()
         ]);
     }
 
